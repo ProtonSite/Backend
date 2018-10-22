@@ -83,4 +83,34 @@ class Route {
         return false;
     }
 
+    /**
+     * Fetch the route matching the provided options. Optionally you can request HTTPS be returned "on" or not (anything else), default is "auto" (use current request).
+     * @param array $options Key => Value paired array of options to match when finding the route.
+     * @param string $https Defines whether to use HTTPS.
+     * @return string The final Full URL for the requested route.
+     */
+    public static function url(array $options, $https = "auto") {
+        $route = Route::fetch($options);
+
+        if( !empty( $route ) && array_key_exists('host', $route) ) {
+            $host = is_array($route['host']) ? $route['host'][0] : $route['host'];
+
+            if( $https == "auto" ) {
+                return "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://" . $host . '/' . $route['uri'];
+            } else if( $https == "on" ) {
+                return "https://" . $host . '/' . $route['uri'];
+            } else {
+                return "http://" . $host . '/' . $route['uri'];
+            }
+        } else {
+            if( $https == "auto" ) {
+                return "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
+            } else if( $https == "on" ) {
+                return "https://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
+            } else {
+                return "http://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
+            }
+        }
+    }
+
 }
