@@ -67,19 +67,32 @@ class Route {
      * @return array All Key => Value options registered with the route.
      */
     public static function fetch(array $options) {
+        // Loop throuh all routes
         foreach( Route::$ROUTES as $route ) {
+            // Variable to keep track of matches found.
             $matches = 0;
+            // Loop though all requested options, separating key from value.
             foreach( $options as $option_key => $option_value ) {
-                if( array_key_exists( $option_key, $route ) && $route[$option_key] == $option_value ) {
-                    $matches++;
+                // Check if current route iteration has an option of the same name set.
+                if( array_key_exists( $option_key, $route ) ) {
+                    // Does that option match the requested value?
+                    if($route[$option_key] == $option_value) {
+                        // Increment matches found by one.
+                        $matches++;
+                    // Is the requested option set as an array? Is the requested option value in that array?
+                    } else if( is_array( $route[$option_key] ) && in_array( $option_value, $route[$option_key] ) ) {
+                        // Increment matches found by one.
+                        $matches++;
+                    }
                 }
             }
-
+            // Have we found a route with the exact options we're looking for?
             if( count( $options ) == $matches ) {
+                // Return the route's options.
                 return $route;
             }
         }
-
+        // Route not found, return false.
         return false;
     }
 
@@ -90,24 +103,34 @@ class Route {
      * @return string The final Full URL for the requested route.
      */
     public static function url(array $options, $https = "auto") {
+        // Fetch the route matching the requested options.
         $route = Route::fetch($options);
-
+        // Does the route have a 'host' option set?
         if( !empty( $route ) && array_key_exists('host', $route) ) {
+            // Should the host option be an array, use the first host, otherwise just use the host.
             $host = is_array($route['host']) ? $route['host'][0] : $route['host'];
-
+            // What HTTPS option should we use?
             if( $https == "auto" ) {
+                // Auto - Return URL matching current connection for HTTPS/HTTP
                 return "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://" . $host . '/' . $route['uri'];
             } else if( $https == "on" ) {
+                // On - Return URL using HTTPS
                 return "https://" . $host . '/' . $route['uri'];
             } else {
+                // Anything else - Return URL using HTTP
                 return "http://" . $host . '/' . $route['uri'];
             }
+        // Route has no host. Use current host.
         } else {
+            // Which HTTPS option should we use?
             if( $https == "auto" ) {
+                // Auto - Return URL matching current connection for HTTPS/HTTP
                 return "http" . (isset($_SERVER['HTTPS']) ? 's' : '') . "://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
             } else if( $https == "on" ) {
+                // On - Return URL using HTTPS
                 return "https://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
             } else {
+                // Anything else - Return URL using HTTP
                 return "http://" . $_SERVER['HTTP_HOST'] . '/' . $route['uri'];
             }
         }
